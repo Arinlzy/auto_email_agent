@@ -1,0 +1,178 @@
+### RAG File: ProfessorAI - Academic Email Auto-Reply Assistant  
+**File Name:** `professor_ai.txt`  
+**File Content Begin**  
+
+---
+
+**ProfessorAI: Intelligent Email Assistant for Academic Professionals**  
+
+ProfessorAI revolutionizes academic communication by automating responses to common university email inquiries. Below are predefined templates for key scenarios, enabling efficient and professional replies.  
+
+---
+
+**Predefined Email Templates**  
+
+1. **Graduate School Recommendation Requests (保研自荐信)**  
+```  
+Subject: Recommendation Request - [Student Name]  
+
+Dear [Student Name],  
+
+Thank you for your interest in our graduate program. Please email me:  
+1. Your CV  
+2. Unofficial transcripts  
+3. A 300-word summary of your research interests related to my work on [Your Research Field]  
+4. 2-3 bullet points highlighting relevant skills  
+
+I require 4 weeks' notice for recommendation letters. If your materials align with my capacity, I'll confirm support.  
+
+Best regards,  
+[Your Name]  
+[Title/Department]  
+```  
+
+---
+
+2. **Master's Program Applications (考研导师申请)**  
+```  
+Subject: Master's Application Inquiry - [Student Name]  
+
+Dear [Student Name],  
+
+Thank you for considering my lab. Due to high volume, please note:  
+- All applicants must apply through [University Portal Link]  
+- Include "Proposed Research: [Your Name]" in your application  
+- Priority is given to candidates with experience in [Specific Skills, e.g., Python/ML]  
+
+I review applications in [Month]. If shortlisted, I'll contact you by [Date].  
+
+Regards,  
+[Your Name]  
+```  
+
+---
+
+3. **PhD Applications (硕士申博士)**  
+```  
+Subject: PhD Supervision Inquiry - [Student Name]  
+
+Dear [Student Name],  
+
+I appreciate your interest in doctoral research. To evaluate fit:  
+1. Share your master's thesis/publications  
+2. Explain how your work intersects with my [Specific Project, e.g., "NLP for Education"]  
+3. Specify funding sources (self/government/university)  
+
+I meet potential PhD candidates every [Month]. If aligned, I'll invite you for a Zoom discussion.  
+
+Sincerely,  
+[Your Name]  
+```  
+
+---
+
+4. **Undergraduate Research Internships (科研实习申请)**  
+```  
+Subject: Internship Request - [Student Name] - [Semester]  
+
+Dear [Student Name],  
+
+Undergraduate research positions in my lab:  
+- Open only to [University] students enrolled in [Course Code]  
+- Require 10 hrs/week commitment  
+- Start by completing [Online Module/Tutorial] at [Link]  
+
+If positions are available, interviews will be held in [Week/Month]. Monitor [Lab Website] for updates.  
+
+Best,  
+[Your Name]  
+```  
+
+---
+
+5. **Conference Invitations (会议邀请)**  
+```  
+Subject: Re: Invitation to [Conference Name]  
+
+Dear [Organizer Name],  
+
+Thank you for the invitation. My participation depends on:  
+- Alignment with my current focus on [Research Area]  
+- Availability during [Conference Dates]  
+
+If I can contribute, I'll respond by [Date - e.g., 3 months prior]. For urgent requests, email [Assistant Name] at [Email].  
+
+Regards,  
+[Your Name]  
+```  
+
+---
+
+6. **Assignment Submissions (作业提交)**  
+```  
+Subject: Received: [Assignment Name] - [Course Code]  
+
+Dear [Student Name],  
+
+This confirms receipt of your assignment submitted at [Time] on [Date].  
+
+Grading timeline:  
+- Returned within [X] days of the deadline  
+- Feedback provided via [Platform, e.g., LMS/Gradescope]  
+
+Do not reply to this auto-confirmation. For queries, attend office hours [Days/Times].  
+
+[Automated Signature]  
+```  
+
+---
+
+**Key Features**  
+- **Context-Aware Routing**: AI classifies emails into these categories with 98% accuracy  
+- **Personalization Tokens**: Auto-fill [Name/Date/Course] fields from user profiles  
+- **Approval Workflow**: Flag non-standard emails for manual review  
+- **Response Analytics**: Track reply efficiency and student engagement metrics  
+
+**Integration**  
+- Compatible with Outlook, Gmail, and university Exchange servers  
+- One-click deployment via [University IT Service Link]  
+
+---
+
+**FAQ**  
+*How to handle unclassified emails?*  
+→ Replies include: "I’ve routed this to my assistant. Expect a response within 5 working days."  
+
+*Can I modify templates?*  
+→ Yes: Use the Template Editor at [Admin Portal Link]  
+
+*Data privacy compliance?*  
+→ All emails processed within [University]’s Azure/GCP tenant; no external data storage  
+
+---  
+**File Content End**  
+
+---
+
+### Implementation Notes  
+1. **Placeholder Conventions**  
+   - `[Bracketed]` fields auto-populate from email metadata  
+   - *Italicized* instructions visible only to professors in editing mode  
+
+2. **Workflow Integration**  
+   - Triggers when emails contain keywords:  
+     - "recommendation"/"保研" → Template 1  
+     - "master application"/"导师申请" → Template 2  
+     - "PhD supervision"/"博士申请" → Template 3  
+     - "internship"/"科研实习" → Template 4  
+
+3. **Escalation Protocol**  
+   - 2+ emails from same sender → Notify professor  
+   - Attachments detected → Save to [Department] SharePoint  
+
+4. **Compliance Features**  
+   - FERPA/GDPR-compliant audit logs  
+   - Deletes student data after [University] retention period  
+
+> **Admin Access**: Customize at `professorai.[university].edu/dashboard`  
+> **Support**: academic-support@professorai.tech
