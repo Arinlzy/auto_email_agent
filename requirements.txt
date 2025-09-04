@@ -4,6 +4,7 @@ langgraph
 langchain-groq 
 langchain_google_genai
 langchain_chroma
+langchain_openai
 chromadb
 google-api-python-client
 google-auth-oauthlib
@@ -16,3 +17,6 @@ sse_starlette
 uvicorn
 gunicorn
 fastapi
+openai
+anthropic
+pyyaml
