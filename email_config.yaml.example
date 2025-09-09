@@ -1,0 +1,86 @@
+# Email Configuration File
+# This file contains email provider settings for the IMAP/SMTP email client
+
+# 当前使用的邮箱provider
+# 可选值: gmail, outlook, yahoo, icloud, custom_exchange
+provider: "gmail"
+
+providers:
+  # Gmail configuration
+  gmail:
+    imap_server: "imap.gmail.com"
+    imap_port: 993
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    auth_method: "app_password"
+    email: "您的Gmail地址"
+    app_password: "您的Gmail应用专用密码"
+    drafts_folder: "[Gmail]/Drafts"
+    use_ssl: true
+    use_starttls: true
+
+  # Microsoft Outlook/Hotmail configuration
+  outlook:
+    imap_server: "imap-mail.outlook.com"
+    imap_port: 993
+    smtp_server: "smtp-mail.outlook.com"
+    smtp_port: 587
+    auth_method: "app_password"
+    email: "您的Outlook地址"
+    app_password: "您的Outlook应用密码"
+    drafts_folder: "Drafts"
+    use_ssl: true
+    use_starttls: true
+
+  # Yahoo Mail configuration
+  yahoo:
+    imap_server: "imap.mail.yahoo.com"
+    imap_port: 993
+    smtp_server: "smtp.mail.yahoo.com"
+    smtp_port: 587
+    auth_method: "app_password"
+    email: "您的Yahoo邮箱地址"
+    app_password: "您的Yahoo应用密码"
+    drafts_folder: "Drafts"
+    use_ssl: true
+    use_starttls: true
+
+  # iCloud configuration
+  icloud:
+    imap_server: "imap.mail.me.com"
+    imap_port: 993
+    smtp_server: "smtp.mail.me.com"
+    smtp_port: 587
+    auth_method: "app_password"
+    email: "您的iCloud邮箱地址"
+    app_password: "您的iCloud应用密码"
+    drafts_folder: "Drafts"
+    use_ssl: true
+    use_starttls: true
+
+  # Example for custom Exchange server
+  custom_exchange:
+    imap_server: "mail.company.com"
+    imap_port: 993
+    smtp_server: "mail.company.com"
+    smtp_port: 587
+    auth_method: "ntlm"
+    email: "您的企业邮箱地址"
+    app_password: "您的企业邮箱密码"
+    drafts_folder: "Drafts"
+    use_ssl: true
+    use_starttls: true
+    
+
+# Configuration notes:
+# - provider: 指定当前使用的邮箱提供商
+# - auth_method: 认证方法，推荐使用 "app_password"
+# - email: 邮箱地址，直接在配置文件中指定
+# - app_password: 应用专用密码，各邮箱提供商的生成方式：
+#   * Gmail: 在Google账户安全设置中生成应用密码
+#   * Outlook: 在Microsoft账户安全设置中生成应用密码
+#   * Yahoo: 在Yahoo账户安全设置中生成应用密码
+#   * iCloud: 在Apple ID设置中生成应用专用密码
+# - use_ssl: 建议设为true以加密IMAP连接
+# - use_starttls: 建议设为true以加密SMTP连接
+# - drafts_folder: 草稿文件夹名称，Gmail为"[Gmail]/Drafts"，其他多为"Drafts"
