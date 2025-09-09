@@ -29,12 +29,34 @@ class EmailWritingService(BaseService):
     
     def write_draft(self, email_information: str, history: Optional[List[str]] = None) -> WriterOutput:
         """Write an email draft"""
+        # 处理history格式 - 转换LangChain Message对象为字符串
+        processed_history = []
         if history:
-            prompt = f"{EMAIL_WRITER_PROMPT}\n\nHistory:\n{''.join(history)}\n\nEmail Information:\n{email_information}"
+            for item in history:
+                if hasattr(item, 'content'):  # LangChain Message对象
+                    processed_history.append(item.content)
+                elif isinstance(item, str):   # 字符串
+                    processed_history.append(item)
+                else:                        # 其他类型转为字符串
+                    processed_history.append(str(item))
+            
+            prompt = f"{EMAIL_WRITER_PROMPT}\n\nHistory:\n{''.join(processed_history)}\n\nEmail Information:\n{email_information}"
         else:
             prompt = f"{EMAIL_WRITER_PROMPT}\n\nEmail Information:\n{email_information}"
         
-        return self.writer_agent.generate_structured_response(prompt, WriterOutput)
+        try:
+            result = self.writer_agent.generate_structured_response(prompt, WriterOutput)
+            print(f"\n=== EmailWritingService - AI返回结果 ===")
+            print(f"Result type: {type(result)}")
+            if result and hasattr(result, 'email'):
+                print(f"Email content: {result.email}")
+            print(f"========================================\n")
+            return result
+        except Exception as e:
+            print(f"\n=== EmailWritingService错误 ===")
+            print(f"Error: {e}")
+            print(f"==============================\n")
+            raise
     
     def proofread(self, initial_email: str, generated_email: str) -> ProofReaderOutput:
         """Proofread a generated email"""

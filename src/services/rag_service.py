@@ -106,8 +106,8 @@ class RAGService(BaseService):
     
     def _get_db_path(self, provider: ModelProvider, model: str) -> str:
         """Generate database path based on embedding provider and model"""
-        provider_name = provider.value
-        return f"db_{provider_name}_{model.replace('-', '_').replace('/', '_')}"
+        # Use the same path generation logic as EmbeddingFactory
+        return EmbeddingFactory.get_db_path(provider, model)
     
     def get_service_info(self) -> Dict[str, Any]:
         base_info = super().get_service_info()

@@ -1,18 +1,19 @@
+from typing import final
 from colorama import Fore, Style
 from .agents import Agents
-from .tools.GmailTools import GmailToolsClass
+from .tools.email import create_email_tools
 from .state import GraphState, Email
 
 
 class Nodes:
     def __init__(self):
         self.agents = Agents()
-        self.gmail_tools = GmailToolsClass()
+        self.email_tools = create_email_tools(config_file='email_config.yaml')
 
     def load_new_emails(self, state: GraphState) -> GraphState:
-        """Loads new emails from Gmail and updates the state."""
+        """Loads new emails and updates the state."""
         print(Fore.YELLOW + "Loading new emails...\n" + Style.RESET_ALL)
-        recent_emails = self.gmail_tools.fetch_unanswered_emails()
+        recent_emails = self.email_tools.fetch_unanswered_emails()
         emails = [Email(**email) for email in recent_emails]
         
         # 打印每封邮件的内容
@@ -33,7 +34,7 @@ class Nodes:
     def check_new_emails(self, state: GraphState) -> str:
         """Checks if there are new emails to process."""
         if len(state['emails']) == 0:
-            print(Fore.RED + "No new emails" + Style.RESET_AL1L)
+            print(Fore.RED + "No new emails" + Style.RESET_ALL)
             return "empty"
         else:
             print(Fore.GREEN + "New emails to process" + Style.RESET_ALL)
@@ -55,7 +56,7 @@ class Nodes:
         print(current_email.body)
         print(Fore.CYAN + "===========\n" + Style.RESET_ALL)
         
-        result = self.agents.categorize_email.invoke({"email": current_email.body})
+        result = self.agents.categorize_email().invoke({"email": current_email.body})
         print(Fore.MAGENTA + f"Email category: {result.category.value}" + Style.RESET_ALL)
         
         return {
@@ -76,17 +77,24 @@ class Nodes:
         """Constructs RAG queries based on the email content."""
         print(Fore.YELLOW + "Designing RAG query...\n" + Style.RESET_ALL)
         email_content = state["current_email"].body
-        query_result = self.agents.design_rag_queries.invoke({"email": email_content})
-        
+        query_result = self.agents.design_rag_queries().invoke({"email": email_content})
+        print(Fore.MAGENTA + f"RAG queries: {query_result.queries}" + Style.RESET_ALL) #* test
         return {"rag_queries": query_result.queries}
 
     def retrieve_from_rag(self, state: GraphState) -> GraphState:
         """Retrieves information from internal knowledge based on RAG questions."""
         print(Fore.YELLOW + "Retrieving information from internal knowledge...\n" + Style.RESET_ALL)
+        
+        print(Fore.CYAN + f"\n=== RAG检索 {len(state['rag_queries'])} 个查询 ===" + Style.RESET_ALL)
+        
         final_answer = ""
-        for query in state["rag_queries"]:
-            rag_result = self.agents.generate_rag_answer.invoke(query)
+        for i, query in enumerate(state["rag_queries"]):
+            rag_result = self.agents.generate_rag_answer().invoke(query)
             final_answer += query + "\n" + rag_result + "\n\n"
+            print(f"Query {i+1} processed")
+        
+        print(f"检索内容长度: {len(final_answer)} 字符")
+        print(Fore.CYAN + "==================\n" + Style.RESET_ALL)
         
         return {"retrieved_documents": final_answer}
 
@@ -104,13 +112,51 @@ class Nodes:
         # Get messages history for current email
         writer_messages = state.get('writer_messages', [])
         
+        # 调试: 打印关键信息
+        print(Fore.CYAN + f"\n=== Email Writer输入摘要 ===" + Style.RESET_ALL)
+        print(f"Category: {state['email_category']}")
+        print(f"History items: {len(writer_messages)}")
+        print(Fore.CYAN + "========================\n" + Style.RESET_ALL)
+        
         # Write email
-        draft_result = self.agents.email_writer.invoke({
-            "email_information": inputs,
-            "history": writer_messages
-        })
-        email = draft_result.email #! WriterOutput.email
-        trials = state.get('trials', 0) + 1 #! 
+        try:
+            draft_result = self.agents.email_writer().invoke({
+                "email_information": inputs,
+                "history": writer_messages
+            })
+            
+            # 调试: 打印writer返回结果类型
+            print(Fore.CYAN + f"Email Writer结果类型: {type(draft_result)}" + Style.RESET_ALL)
+            
+            if draft_result is None:
+                print(Fore.RED + "Error: Email writer returned None" + Style.RESET_ALL)
+                return {
+                    "generated_email": "Error: Failed to generate email", 
+                    "trials": state.get('trials', 0) + 1,
+                    "writer_messages": writer_messages
+                }
+            
+            if not hasattr(draft_result, 'email'):
+                print(Fore.RED + f"Error: Draft result has no 'email' attribute. Type: {type(draft_result)}" + Style.RESET_ALL)
+                print(Fore.RED + f"Draft result: {draft_result}" + Style.RESET_ALL)
+                # 尝试直接访问所有属性
+                print(Fore.YELLOW + f"Available attributes: {dir(draft_result)}" + Style.RESET_ALL)
+                return {
+                    "generated_email": "Error: Invalid draft result format", 
+                    "trials": state.get('trials', 0) + 1,
+                    "writer_messages": writer_messages
+                }
+            
+            email = draft_result.email #! WriterOutput.email
+            trials = state.get('trials', 0) + 1 #!
+            
+        except Exception as e:
+            print(Fore.RED + f"Error writing email: {e}" + Style.RESET_ALL)
+            return {
+                "generated_email": "Error: Exception occurred during email generation", 
+                "trials": state.get('trials', 0) + 1,
+                "writer_messages": writer_messages
+            } 
 
         # 打印生成的邮件草稿
         print(Fore.GREEN + "\n=== 生成的邮件草稿 ===" + Style.RESET_ALL)
@@ -129,18 +175,42 @@ class Nodes:
     def verify_generated_email(self, state: GraphState) -> GraphState:
         """Verifies the generated email using the proofreader agent."""
         print(Fore.YELLOW + "Verifying generated email...\n" + Style.RESET_ALL)
-        review = self.agents.email_proofreader.invoke({
-            "initial_email": state["current_email"].body,
-            "generated_email": state["generated_email"],
-        })
+        
+        try:
+            review = self.agents.email_proofreader().invoke({
+                "initial_email": state["current_email"].body,
+                "generated_email": state["generated_email"],
+            })
+            
+            if review is None:
+                print(Fore.RED + "Error: Email proofreader returned None" + Style.RESET_ALL)
+                return {
+                    "sendable": False,
+                    "writer_messages": state.get('writer_messages', [])
+                }
+            
+            if not hasattr(review, 'send') or not hasattr(review, 'feedback'):
+                print(Fore.RED + f"Error: Review result has missing attributes. Type: {type(review)}" + Style.RESET_ALL)
+                print(Fore.RED + f"Review result: {review}" + Style.RESET_ALL)
+                return {
+                    "sendable": False,
+                    "writer_messages": state.get('writer_messages', [])
+                }
 
-        writer_messages = state.get('writer_messages', [])
-        writer_messages.append(f"**Proofreader Feedback:**\n{review.feedback}")
+            writer_messages = state.get('writer_messages', [])
+            writer_messages.append(f"**Proofreader Feedback:**\n{review.feedback}")
 
-        return {
-            "sendable": review.send,
-            "writer_messages": writer_messages
-        }
+            return {
+                "sendable": review.send,
+                "writer_messages": writer_messages
+            }
+                
+        except Exception as e:
+            print(Fore.RED + f"Error verifying email: {e}" + Style.RESET_ALL)
+            return {
+                "sendable": False,
+                "writer_messages": state.get('writer_messages', [])
+            }
 
     def must_rewrite(self, state: GraphState) -> str:
         """Determines if the email needs to be rewritten based on the review and trial count."""
@@ -160,16 +230,16 @@ class Nodes:
             return "rewrite"
 
     def create_draft_response(self, state: GraphState) -> GraphState:
-        """Creates a draft response in Gmail."""
+        """Creates a draft response."""
         print(Fore.YELLOW + "Creating draft email...\n" + Style.RESET_ALL)
-        self.gmail_tools.create_draft_reply(state["current_email"], state["generated_email"])
+        self.email_tools.create_draft_reply(state["current_email"], state["generated_email"])
         
         return {"retrieved_documents": "", "trials": 0}
 
     def send_email_response(self, state: GraphState) -> GraphState:
-        """Sends the email response directly using Gmail."""
+        """Sends the email response directly."""
         print(Fore.YELLOW + "Sending email...\n" + Style.RESET_ALL)
-        self.gmail_tools.send_reply(state["current_email"], state["generated_email"])
+        self.email_tools.send_reply(state["current_email"], state["generated_email"])
         
         return {"retrieved_documents": "", "trials": 0}
     
