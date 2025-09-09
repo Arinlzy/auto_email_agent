@@ -239,7 +239,25 @@ class Nodes:
     def send_email_response(self, state: GraphState) -> GraphState:
         """Sends the email response directly."""
         print(Fore.YELLOW + "Sending email...\n" + Style.RESET_ALL)
-        self.email_tools.send_reply(state["current_email"], state["generated_email"])
+        
+        import time
+        start_time = time.time()
+        
+        try:
+            success = self.email_tools.send_reply(state["current_email"], state["generated_email"])
+            
+            end_time = time.time()
+            print(f"邮件发送操作完成，总耗时: {end_time - start_time:.2f}秒")
+            
+            if success:
+                print(Fore.GREEN + "邮件发送成功!" + Style.RESET_ALL)
+            else:
+                print(Fore.RED + "邮件发送失败!" + Style.RESET_ALL)
+                
+        except Exception as e:
+            end_time = time.time()
+            print(f"邮件发送异常，耗时: {end_time - start_time:.2f}秒")
+            print(Fore.RED + f"发送错误: {e}" + Style.RESET_ALL)
         
         return {"retrieved_documents": "", "trials": 0}
     

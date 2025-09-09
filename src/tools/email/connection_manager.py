@@ -104,7 +104,7 @@ class EmailConnectionManager:
         except (OSError, imaplib.IMAP4.error) as e:
             raise ConnectionError(f"IMAP connection failed: {e}")
     
-    @staticmethod
+    @staticmethod 
     def create_smtp_connection(config: EmailProviderConfig, credentials: Dict[str, str]) -> smtplib.SMTP:
         """
         Create and authenticate SMTP connection.
@@ -120,16 +120,69 @@ class EmailConnectionManager:
             ConnectionError: If connection fails
             AuthenticationError: If authentication fails
         """
+        # 首先尝试标准SMTP连接
+        connection = None
         try:
-            # Create SMTP connection
-            connection = smtplib.SMTP(config.smtp_server, config.smtp_port)
+            print(f"正在连接SMTP服务器: {config.smtp_server}:{config.smtp_port}")
             
-            if config.use_starttls:
-                connection.starttls()
+            # 如果端口是465，尝试SSL连接
+            if config.smtp_port == 465:
+                print("检测到465端口，尝试SMTP_SSL连接...")
+                connection = smtplib.SMTP_SSL(
+                    config.smtp_server, 
+                    config.smtp_port,
+                    timeout=60
+                )
+                print("SMTP_SSL连接建立成功")
+            else:
+                # Create SMTP connection with longer timeout and local hostname
+                import socket
+                local_hostname = socket.getfqdn()
+                connection = smtplib.SMTP(
+                    config.smtp_server, 
+                    config.smtp_port, 
+                    local_hostname=local_hostname,
+                    timeout=60  # 增加超时时间到60秒
+                )
+                print("SMTP连接建立成功")
+            
+            # Enable debug output for troubleshooting
+            # connection.set_debuglevel(1)  # Uncomment for detailed SMTP debug
+            
+            # 发送EHLO命令确保连接正常
+            print("发送EHLO命令...")
+            connection.ehlo()
+            print("EHLO命令成功")
+            
+            # 只有在非SSL连接时才需要STARTTLS
+            if config.use_starttls and config.smtp_port != 465:
+                print("启用STARTTLS加密...")
+                # 尝试不同的TLS配置
+                try:
+                    # 标准STARTTLS
+                    connection.starttls()
+                    print("STARTTLS启用成功")
+                except Exception as e:
+                    print(f"标准STARTTLS失败: {e}")
+                    print("尝试兼容性STARTTLS...")
+                    # 尝试兼容性设置
+                    import ssl
+                    context = ssl.create_default_context()
+                    context.check_hostname = False
+                    context.verify_mode = ssl.CERT_NONE
+                    connection.starttls(context=context)
+                    print("兼容性STARTTLS启用成功")
+                
+                # STARTTLS后重新发送EHLO
+                print("STARTTLS后重新发送EHLO...")
+                connection.ehlo()
+                print("STARTTLS后EHLO成功")
             
             # Authenticate
+            print("正在进行SMTP身份验证...")
             try:
                 connection.login(credentials['email'], credentials['password'])
+                print("SMTP身份验证成功")
             except smtplib.SMTPAuthenticationError as e:
                 raise AuthenticationError(f"SMTP authentication failed: {e}")
             

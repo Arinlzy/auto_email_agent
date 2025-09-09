@@ -309,33 +309,67 @@ class IMAPSMTPClient(BaseEmailClient):
             if not self.connect():
                 return False
         
-        try:
-            # Create reply message
-            reply_message = EmailParser.create_reply_message(
-                initial_email, 
-                reply_text, 
-                self.email_address,
-                send_mode=True  # Send mode
-            )
-            
-            # Create SMTP connection
-            smtp_conn = self.connection_manager.create_smtp_connection(
-                self.config, 
-                self.credentials
-            )
-            
+        # 重试机制
+        max_retries = 3
+        retry_count = 0
+        
+        while retry_count < max_retries:
             try:
-                # Send the message
-                smtp_conn.send_message(reply_message)
-                print(f"Reply sent successfully to {initial_email.sender}")
-                return True
+                if retry_count > 0:
+                    print(f"第 {retry_count + 1} 次尝试发送邮件...")
+                    import time
+                    time.sleep(2 * retry_count)  # 递增延迟
                 
-            finally:
-                smtp_conn.quit()
+                print(f"正在创建回复邮件...")
+                # Create reply message
+                reply_message = EmailParser.create_reply_message(
+                    initial_email, 
+                    reply_text, 
+                    self.email_address,
+                    send_mode=True  # Send mode
+                )
+                print(f"回复邮件创建完成，正在发送给: {initial_email.sender}")
                 
-        except Exception as e:
-            print(f"Error sending reply: {e}")
-            return False
+                # Create SMTP connection
+                print("正在建立SMTP连接...")
+                smtp_conn = self.connection_manager.create_smtp_connection(
+                    self.config, 
+                    self.credentials
+                )
+                
+                try:
+                    # Send the message
+                    print("正在发送邮件...")
+                    send_result = smtp_conn.send_message(reply_message)
+                    
+                    # Check if there were any send errors
+                    if send_result:
+                        print(f"发送过程中有部分错误: {send_result}")
+                    else:
+                        print("邮件发送完成")
+                    
+                    print(f"Reply sent successfully to {initial_email.sender}")
+                    return True
+                    
+                finally:
+                    print("正在关闭SMTP连接...")
+                    try:
+                        smtp_conn.quit()
+                        print("SMTP连接已关闭")
+                    except Exception as e:
+                        print(f"关闭SMTP连接时出错: {e}")
+                
+            except Exception as e:
+                retry_count += 1
+                print(f"发送尝试 {retry_count} 失败: {e}")
+                
+                if retry_count >= max_retries:
+                    print(f"邮件发送失败，已尝试 {max_retries} 次")
+                    return False
+                else:
+                    print(f"将在 {2 * retry_count} 秒后重试...")
+                    
+        return False
     
     def _get_folder_list(self) -> List[str]:
         """

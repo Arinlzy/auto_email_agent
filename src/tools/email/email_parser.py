@@ -200,6 +200,10 @@ class EmailParser:
         Returns:
             MIMEMultipart message ready for sending
         """
+        import time
+        start_time = time.time()
+        print("开始创建邮件消息...")
+        
         message = MIMEMultipart("alternative")
         
         # Extract recipient email address
@@ -234,6 +238,10 @@ class EmailParser:
         html_text = reply_text.replace('\n', '<br>\n')
         html_part = MIMEText(html_text, 'html', 'utf-8')
         message.attach(html_part)
+        
+        # 性能监控
+        end_time = time.time()
+        print(f"邮件消息创建完成，耗时: {end_time - start_time:.2f}秒")
         
         return message
     
