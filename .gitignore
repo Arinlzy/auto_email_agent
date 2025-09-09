@@ -3,3 +3,6 @@
 CLAUDE.md
 .DS_Store
 db/*
+token.json
+email_config.yaml
+credentials.json
